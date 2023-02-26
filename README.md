@@ -1,0 +1,1 @@
+# Shaxsiy operatsion tizim
