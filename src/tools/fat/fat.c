@@ -90,7 +90,7 @@ DirectoryEntry* findFile(const char* name){
 
 int main(int argc, char** argv){
     if(argc < 3){
-        printf("Syntax: %s <disk image> <filename>\n", *argv);
+        printf("Sintaksis: %s <disk image> <filename>\n", *argv);
         return -1;
     }
 
