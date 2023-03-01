@@ -158,7 +158,7 @@ int main(int argc, char** argv){
         free(g_Fat);
         free(g_RootDirectory);
         free(buffer);
-        return -5;
+        return -6;
     }
 
     for(size_t i = 0; i < fileEntry->Size; i++){
