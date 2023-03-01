@@ -61,36 +61,17 @@ ebr_system_id:
     db 'FAT12   '
 
 start:
-    jmp main
-
-puts:
-    push si
-    push ax
-    push bx
-
-.loop:
-    lodsb
-    or al, al
-    jz .done
-
-    mov ah, 0x0e
-    mov bx, 0
-    int 0x10
-
-    jmp .loop
-
-.done:
-    pop bx
-    pop ax
-    pop si
-    ret
-
-main:
     mov ax, 0
     mov ds, ax
     mov ss, ax
     mov es, ax
     mov sp, 0x7c00
+
+    push es
+    push word .after
+    retf
+
+.after:
 
     mov [ebr_driver_number], dl
 
@@ -99,8 +80,14 @@ main:
     mov bx, 0x7e00
     call disk_read
 
-    mov si, msg_hello
+    mov si, msg_loading
     call puts
+
+    push es
+    mov ah, 0x08
+    int 0x13
+    jc floppy_error
+    pop es
 
     cli
     hlt
@@ -194,8 +181,8 @@ disk_reset:
     popa
     ret
 
-msg_hello:
-    db "Hello World!", ENDL, 0
+msg_loading:
+    db "Loading...", ENDL, 0
 
 msg_read_failed:
     db "Read from disk failed!", ENDL, 0
