@@ -89,6 +89,13 @@ start:
     jc floppy_error
     pop es
 
+    and cl, 0x3f
+    xor cl, cl
+    mov [bdb_sectors_per_track], cx
+
+    inc dh
+    mov [bdb_heads], dh
+
     cli
     hlt
 
