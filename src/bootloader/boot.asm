@@ -96,11 +96,60 @@ start:
     inc dh
     mov [bdb_heads], dh
 
+    mov ax, [bdb_sectors_per_fat]
+    mov bl, [bdb_fat_count]
+    xor bh, bh
+    mul bx
+    add ax, [bdb_reserved_sectors]
+    push ax
+
+    mov ax, [bdb_sectors_per_fat]
+    shl ax, 5
+    xor dx, dx
+    div word [bdb_bytes_per_sector]
+
+    test dx, dx
+    jz root_dir_after
+    inc ax
+
+root_dir_after:
+
+    mov cl, al
+    pop ax
+    mov dl, [ebr_driver_number]
+    mov bx, buffer
+    call disk_read
+
+    xor bx, bx
+    mov di, buffer
+
+.search_kernel:
+    mov si, file_kernel_bin
+    mov cx, 11
+    push di
+    repe cmpsb
+    pop di
+    je found_kernel
+    
+    add di, 32
+    inc bx
+    cmp bx, [bdb_dir_entries_count]
+    jl .search_kernel
+
+    jmp kernel_not_found_error
+
+found_kernel:
+
     cli
     hlt
 
 floppy_error:
     mov si, msg_read_failed
+    call puts
+    jmp wait_key_and_reboot
+
+kernel_not_found_error:
+    mov si, msg_kernel_not_found
     call puts
     jmp wait_key_and_reboot
 
@@ -193,6 +242,12 @@ msg_loading:
 
 msg_read_failed:
     db "Read from disk failed!", ENDL, 0
+
+file_kernel_bin:
+    db "KERNEL  BIN"
+
+msg_kernel_not_found:
+    db "Kernel not found", ENDL, 0
 
 times 510-($-$$) db 0
 dw 0xaa55
