@@ -1,4 +1,4 @@
 # Shaxsiy operatsion tizim
 <br>
-```make```<br>
-```make run```
+<code>make</code><br>
+<code>make run</code>
