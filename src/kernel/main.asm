@@ -1,11 +1,15 @@
-org 0x7c00
+org 0x0
 bits 16
 
 %define ENDL 0x0d, 0x0a
 
 start:
-    jmp main
+    mov si, msg_hello
+    call puts
 
+.halt:
+    cli
+    hlt
 
 puts:
     push si
@@ -29,23 +33,5 @@ puts:
     pop si
     ret
 
-main:
-    mov ax, 0
-    mov ds, ax
-    mov es, ax
-
-    mov ss, ax
-    mov sp, 0x7c00
-
-    mov si, msg_hello
-    call puts
-
-    hlt
-
-jmp $
-
 msg_hello:
-    db "Hello World!", ENDL, 0
-
-times 510-($-$$) db 0
-dw 0xaa55
+    db "Radix OS!", ENDL, 0
