@@ -1,4 +1,8 @@
 # Shaxsiy operatsion tizim
 <br>
-<code>make</code><br>
-<code>make run</code>
+Kerakli dasturlar:
+<br>
+<code>nasm qemu</code>
+<br>
+Komplatsiya qilish uchun: <code>make</code><br>
+Ishlatish uchun<code>make run</code>
