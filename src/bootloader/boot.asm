@@ -140,6 +140,66 @@ root_dir_after:
 
 found_kernel:
 
+    mov ax, [di + 26]
+    mov [kernel_cluster], ax
+
+    mov ax, [bdb_reserved_sectors]
+    mov bx, buffer
+    mov cl, [bdb_sectors_per_fat]
+    mov dl, [ebr_driver_number]
+    call disk_read
+    mov bx, KERNEL_LOAD_SEGMENT
+    mov es, bx
+    mov bx, KERNEL_LOAD_OFFSET
+
+load_kernel_loop:
+
+    mov ax, [kernel_cluster]
+    add ax, 31
+
+    mov cl, 1
+    mov dl, [ebr_driver_number]
+    call disk_read
+
+    add bx, [bdb_bytes_per_sector]
+
+    mov ax, [kernel_cluster]
+    mov cx, 3
+    mul cx
+    mov cx, 2
+    div cx
+
+    mov si, buffer
+    add si, ax
+    mov ax, [ds:si]
+
+    or dx, dx
+    jz even
+
+odd:
+    shr ax, 4
+    jmp next_cluster_after
+
+even:
+    and ax, 0x0FFF
+
+next_cluster_after:
+    cmp ax, 0x0FF8
+    jae read_finish
+
+    mov [kernel_cluster], ax
+    jmp load_kernel_loop
+
+read_finish:
+    mov dl, [ebr_driver_number]
+    mov ax, KERNEL_LOAD_SEGMENT
+    mov ds, ax
+    mov es, ax
+
+    jmp KERNEL_LOAD_SEGMENT:KERNEL_LOAD_OFFSET
+
+    jmp wait_key_and_reboot
+
     cli
     hlt
 
@@ -156,6 +216,28 @@ kernel_not_found_error:
 .halt:
     cli
     hlt
+
+puts:
+    push si
+    push ax
+    push bx
+
+loop:
+    lodsb
+    or al, al
+    jz .done
+
+    mov ah, 0x0e
+    mov bh, 0
+    int 0x10
+
+    jmp loop
+
+.done:
+    pop bx
+    pop ax
+    pop si
+    ret
 
 wait_key_and_reboot:
     mov ah, 0
@@ -249,5 +331,12 @@ file_kernel_bin:
 msg_kernel_not_found:
     db "Kernel not found", ENDL, 0
 
+kernel_cluster:
+    dw 0
+
+KERNEL_LOAD_SEGMENT equ 0x2000
+KERNEL_LOAD_OFFSET equ 0
+
 times 510-($-$$) db 0
 dw 0xaa55
+buffer:
