@@ -1,3 +1,4 @@
 *.properties
 test.txt
 bx_enh_dbg.ini
+build/
