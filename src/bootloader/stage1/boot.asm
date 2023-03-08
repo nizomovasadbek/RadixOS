@@ -287,8 +287,8 @@ disk_reset:
 
 msg_loading:            db '....', ENDL, 0
 msg_read_failed:        db "Diskdan o'qishda xatolik!", ENDL, 0
-msg_kernel_not_found:   db 'KERNEL.BIN topilmadi!', ENDL, 0
-file_kernel_bin:        db 'KERNEL  BIN'
+msg_kernel_not_found:   db 'stage2.bin topilmadi!', ENDL, 0
+file_kernel_bin:        db 'STAGE2  BIN'
 kernel_cluster:         dw 0
 
 KERNEL_LOAD_SEGMENT     equ 0x2000
