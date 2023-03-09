@@ -1,6 +1,0 @@
-stdint.h(15): Warning! W138: No newline at end of file
-stdint.h(15): Warning! W129: #endif matches #if in different source file 'stdint.h'
-stdio.h(9): Warning! W138: No newline at end of file
-stdio.h(9): Warning! W129: #endif matches #if in different source file 'stdio.h'
-main.c(7): Warning! W138: No newline at end of file
-main.c(4): Warning! W303: Parameter 'bootDrive' has been defined, but not referenced
