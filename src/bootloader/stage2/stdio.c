@@ -54,6 +54,13 @@ void _cdecl printf(const char *fmt, ...){
                 } else goto PRINTF_STATE_SPEC_;
                 break;
 
+            case PRINTF_STATE_LENGTH_LONG:
+                if(*fmp == 'l'){
+                    length = PRINTF_LENGTH_LONG_LONG;
+                    state = PRINTF_STATE_SPEC;
+                } else goto PRINTF_STATE_SPEC_;
+                break;
+
         }
 
         fmt++;
