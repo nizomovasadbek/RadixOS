@@ -16,6 +16,8 @@ void _cdecl printf(const char *fmt, ...){
     int* argp = (int*) &fmt;
     int state = PRINTF_STATE_NORMAL;
     int length = PRINTF_LENGTH_DEFAULT;
+    int radix = 10;
+    bool sign = false;
 
     argp++;
 
@@ -60,7 +62,23 @@ void _cdecl printf(const char *fmt, ...){
                     state = PRINTF_STATE_SPEC;
                 } else goto PRINTF_STATE_SPEC_;
                 break;
+            case PRINTF_STATE_SPEC:
+            PRINTF_STATE_SPEC_:
+                switch(*fmt) {
+                    case 'c': putc((char) *argp);
+                    argp++;
+                    break;
 
+                    case 's': puts(*(char**) argp);
+                    argp++;
+                    break;
+
+                    case '%': puts('%');
+                    break;
+
+                    case 'd':
+                    case 'i':
+                }
         }
 
         fmt++;
