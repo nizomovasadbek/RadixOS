@@ -15,8 +15,11 @@
 
 #pragma once
 
+#include "stdint.h"
+
 void putc(char);
 void puts(const char*);
 void _cdecl printf(const char *, ...);
+int* printf_number(int*, int, bool, int);
 
 #endif

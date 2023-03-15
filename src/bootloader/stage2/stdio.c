@@ -77,11 +77,46 @@ void _cdecl printf(const char *fmt, ...){
                     break;
 
                     case 'd':
-                    case 'i':
+                    case 'i': sign = true;
+                    radix = 10;
+                    argp = printf_number(argp, length, sign, radix);
+                    break;
+
+                    case 'u':
+                        sign = false;
+                        radix = 10;
+                        argp = printf_number(argp, length, sign, radix);
+                        break;
+
+                    case 'x':
+                    case 'X':
+                    case 'p':
+                        sign = false;
+                        radix = 16;
+                        argp = printf_number(argp, length, sign, radix);
+
+                    case 'o':
+                        sign = false;
+                        radix = 8;
+                        argp = printf_number(argp, length, sign, radix);
+                        break;
+
+                    default: break;
                 }
+
+            state = PRINTF_STATE_NORMAL;
+            length = PRINTF_STATE_DEFAULT;
+            radix = 10;
+            sign = false;
+            break;
+            
         }
 
         fmt++;
     }
     
+}
+
+int* printf_number(int* printf, int length, bool sign, radix) {
+
 }
