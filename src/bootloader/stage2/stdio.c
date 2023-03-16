@@ -50,14 +50,14 @@ void _cdecl printf(const char *fmt, ...){
                 }
                 break;
             case PRINTF_STATE_LENGTH_SHORT:
-                if(*fmp == 'h'){
+                if(*fmt == 'h'){
                     length = PRINTF_LENGTH_SHORT_SHORT;
                     state = PRINTF_STATE_SPEC;
                 } else goto PRINTF_STATE_SPEC_;
                 break;
 
             case PRINTF_STATE_LENGTH_LONG:
-                if(*fmp == 'l'){
+                if(*fmt == 'l'){
                     length = PRINTF_LENGTH_LONG_LONG;
                     state = PRINTF_STATE_SPEC;
                 } else goto PRINTF_STATE_SPEC_;
@@ -105,7 +105,7 @@ void _cdecl printf(const char *fmt, ...){
                 }
 
             state = PRINTF_STATE_NORMAL;
-            length = PRINTF_STATE_DEFAULT;
+            length = PRINTF_LENGTH_DEFAULT;
             radix = 10;
             sign = false;
             break;
@@ -117,6 +117,59 @@ void _cdecl printf(const char *fmt, ...){
     
 }
 
-int* printf_number(int* printf, int length, bool sign, radix) {
+const char g_HexChars[] = "0123456789abcdef";
 
+int* printf_number(int* argp, int length, bool sign, int radix) {
+    char buffer[32];
+    unsigned long long number;
+    int number_sign = 1;
+    int pos = 0;
+
+    switch (length) {
+        case PRINTF_LENGTH_SHORT_SHORT:
+        case PRINTF_LENGTH_SHORT:
+        case PRINTF_LENGTH_DEFAULT:
+            if(sign) {
+                int n = *argp;
+                if(n < 0) {
+                    n = -n;
+                    number_sign = 1;
+                }
+                number = (unsigned long long) n;
+            }
+            else {
+                number = *(unsigned long*) argp;
+            }
+            argp++;
+            break;
+
+        case PRINTF_LENGTH_LONG:
+            if(sign) {
+                long int n = *(long int*) argp;
+                if (n < 0) {
+                    n = -n;
+                    number_sign = 1;
+                }
+                number = (unsigned long long) n;
+            }
+            else {
+                number = *(unsigned long int*) argp;
+            }
+            argp += 2;
+            break;
+
+        case PRINTF_LENGTH_LONG_LONG:
+            if(sign) {
+                long long int n = *(long long int*) argp;
+                if(n < 0) {
+                    n = -n;
+                    number_sign = 1;
+                }
+                number = (unsigned long long) n;
+            } else {
+                number = *(unsigned long long*) argp;
+            }
+            argp += 4;
+            break;
+    }
 }
