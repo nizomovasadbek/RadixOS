@@ -54,7 +54,52 @@ _x86_Disk_Reset:
     push bp
     mov bp, sp
 
+    mov ah, 0
     mov dl, [bp+4]
+    stc
+    int 0x13
+
+    mov ax, 1
+    sbb ax, 0
+
+    mov sp, bp
+    pop bp
+    ret
+
+global _x86_Disk_Read
+_x86_Disk_Read:
+
+    push bp
+    mov bp, sp
+
+    push bx
+    push es
+
+    mov dl, [bp + 4]
+    mov ch, [bp + 6]
+    mov cl, [bp + 7]
+    shl cl, 6
+
+    mov dh, [bp + 8]
+    mov al, [bp + 10]
+    and al, 0x3F
+    or cl, al
+
+    mov al, [bp + 12]
+
+    mov bx, [bp + 16]
+    mov es, bx
+    mov bx, [bp + 14]
+    mov ah, 0x02
+
+    stc
+    int 0x13
+
+    mov ax, 1
+    sbb ax, 0
+
+    pop es
+    pop bx
 
     mov sp, bp
     pop bp
