@@ -47,3 +47,15 @@ _x86_VideoWriteChatTeletype:
 
     pop bp
     ret
+
+global _x86_Disk_Reset
+_x86_Disk_Reset:
+
+    push bp
+    mov bp, sp
+
+    mov dl, [bp+4]
+
+    mov sp, bp
+    pop bp
+    ret
