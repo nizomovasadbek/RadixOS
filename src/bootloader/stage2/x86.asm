@@ -104,3 +104,50 @@ _x86_Disk_Read:
     mov sp, bp
     pop bp
     ret
+
+global _x86_Disk_GetDriveParams
+_x86_Disk_GetDriveParams:
+
+    push bp
+    mov bp, sp
+
+    push bx
+    push si
+    push es
+    push di
+
+    mov dl, [bp + 4]
+    mov ah, 0x08
+    mov di, 0
+    mov es, di
+    stc
+    int 0x13
+
+    mov ax, 1
+    sbb ax, 0
+
+    mov si, [bp + 6]
+    mov [si], bl
+
+    mov bl, ch
+    mov bh, cl
+    shr bh, 6
+    mov si, [bp + 8]
+    mov [si], bx
+
+    xor ch, ch
+    add cl, 0x3F
+    mov si, [bp + 10]
+    mov [si], cx
+
+    mov cl, dh
+    mov si, [bp + 12]
+    mov [si], cx
+
+    pop di
+    pop es
+    pop si
+    pop bx
+
+    mov sp, bp
+    pop bp
