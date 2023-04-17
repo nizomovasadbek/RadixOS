@@ -80,8 +80,8 @@ _x86_Disk_Read:
     mov cl, [bp + 7]
     shl cl, 6
 
-    mov dh, [bp + 8]
-    mov al, [bp + 10]
+    mov dh, [bp + 10]
+    mov al, [bp + 8]
     and al, 0x3F
     or cl, al
 
