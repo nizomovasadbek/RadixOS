@@ -117,7 +117,7 @@ _x86_Disk_GetDriveParams:
     push di
 
     mov dl, [bp + 4]
-    mov ah, 0x08
+    mov ax, 0x08
     mov di, 0
     mov es, di
     stc
