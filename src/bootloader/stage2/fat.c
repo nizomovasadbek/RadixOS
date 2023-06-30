@@ -4,6 +4,8 @@
 #include "memdefs.h"
 
 #define SECTOR_SIZE 512
+#define MAX_FILE_HANDLES 10
+#define ROOT_DIRECTORY_HANDLE -1
 
 #pragma pack(push, 1)
 typedef struct {
@@ -34,15 +36,27 @@ typedef struct {
 #pragma pack(pop)
 
 typedef struct {
+    FAT_File Public;
+    bool Opened;
+    uint32_t FirstCluster;
+    uint32_t CurrentCluster;
+    uint32_t CurrentSectorInCluster;
+    uint8_t Buffer[SECTOR_SIZE];
+} FAT_FileData;
+
+typedef struct {
     union {
         FAT_BootSector BootSector;
         uint8_t BootSectorBytes[SECTOR_SIZE];
     } BS;
+
+    FAT_FileData RootDirectory;
+    FAT_FileData OpenedFiles[MAX_FILE_HANDLES];
+
 } FAT_Data;
 
 static FAT_Data far* g_Data;
 static uint8_t fat* g_Fat = NULL;
-static FAT_DirectoryEntry* g_RootDirectory = NULL;
 static uint32_t g_RootDirectoryEnd;
 
 bool FAT_ReadBootSector(DISK* disk) {
@@ -81,18 +95,26 @@ bool FAT_Initialize(DISK* disk) {
         return false;
     }
 
+    uint32_t rootDirLba = g_Data->BS.BootSector.ReservedSectors + g_Data->BS.BootSector.SectorsPerFat * g_Data->BS.BootSector.FatCount;
     g_RootDirectory = (FAT_DirectoryEntry far*) (g_Fat + fatSize);
     uint32_t rootDirSize = sizeof(DirectoryEntry) * g_Data->BS.BootSector.DirEntryCount;
-    rootDirSize = align(rootDirSize, g_Data->BS.BootSector.BytesPerSector);
 
-    if(sizeof(FAT_Data) + fatSize + rootDirSize >= MEMORY_FAT_SIZE) {
-        printf("Not enough memory \r\n");
+    g_Data->RootDirectory.Opened = true;
+    g_Data->RootDirectory.Public.Handle = ROOT_DIRECTORY_HANDLE;
+    g_Data->RootDirectory.Public.IsDirectory = true;
+    g_Data->RootDirectory.Public.Position = 0;
+    g_Data->RootDirectory.Public.Size = sizeof(FAT_DirectoryEntry) * g_Data->BS.BootSector.DirEntryCount;
+    g_Data->RootDirectory.CurrentCluster = 0;
+    g_Data->RootDirectory.FirstCluster = 0;
+    g_Data->RootDirectory.CurrentSectorInCluster = 0;
+
+    if(!DISK_ReadSectors(disk, rootDirLba, 1, g_Data->RootDirectory.Buffer)) {
+        printf("Error with reading root directory\r\n");
         return false;
     }
 
-    if(!FAT_ReadRootDirectory(disk)) {
-        printf("Error with reading root directory\r\n");
-        return 0;
+    for(int i = 0; i < MAX_FILE_HANDLES; i++) {
+        g_Data->OpenedFiles[i].Opened = false;
     }
 }
 
