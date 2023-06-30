@@ -6,6 +6,7 @@
 #define SECTOR_SIZE 512
 #define MAX_FILE_HANDLES 10
 #define ROOT_DIRECTORY_HANDLE -1
+#define MAX_PATH_SIZE 256
 
 #pragma pack(push, 1)
 typedef struct {
@@ -57,7 +58,7 @@ typedef struct {
 
 static FAT_Data far* g_Data;
 static uint8_t fat* g_Fat = NULL;
-static uint32_t g_RootDirectoryEnd;
+static uint32_t g_DataSectionLba;
 
 bool FAT_ReadBootSector(DISK* disk) {
     return DISK_ReadSectors(disk, 0, 1, g_Data->BS.BootSectorBytes);
@@ -113,15 +114,55 @@ bool FAT_Initialize(DISK* disk) {
         return false;
     }
 
+    uint32_t rootDirSectors = (rootDirSize + g_Data->BS.BootSector.BytesPerSector - 1) / g_Data->BS.BootSector.BytesPerSector;
+    g_DataSectionLba = rootDirLba + rootDirSectors;
+
     for(int i = 0; i < MAX_FILE_HANDLES; i++) {
         g_Data->OpenedFiles[i].Opened = false;
     }
 }
 
-FAT_File* FAT_Open(DISK* disk, const char* path) {
-    if(path[0]) {
-        path++;
+uint32_t FAT_ClusterToLba(uint32_t cluster) {
+    return g_DataSectionLba +  (cluster - 2) * g_Data->BS.BootSector.SectorsPerCluster;
+}
+
+FAT_File far* FAT_OpenEntry(DISK* disk, FAT_DirectoryEntry* entry) {
+    int handle = -1;
+    for(int i = 0; i < MAX_FILE_HANDLES && handle < 0; i++) {
+        if(!g_Data->OpenedFiles[i].Opened) {
+            handle = i;
+        }
     }
+
+    if(handle < 0) {
+        printf("Error fat out of handles\r\n");
+        return false;
+    }
+
+    FAT_FileData far* fd = &g_Data->OpenedFiles[handle];
+    fd->Public.Handle = handle;
+    fd->Public.IsDirectory = (entry->Attributes & FAT_ATTRIBUTE_DIRECTORY) != 0;
+    fd->Public.Position = 0;
+    fd->Public.Size = 0;
+    fd->FirstCluster = entry->FirstClusterLow + ((uint32_t) entry->FirstClusterHigh << 16);
+    fd->CurrentCluster = fd->FirstCluster;
+    fd->CurrentSectorInCluster = 0;
+
+    if(!DISK_ReadSectors(disk, FAT_ClusterToLba(fd->CurrentCluster), 1, fd->Buffer)) {
+        printf("Error reading FAT filesystem\r\n");
+        return false;
+    }
+
+    fd->Opened = true;
+    return &fd->Public;
+}
+
+FAT_File* FAT_Open(DISK* disk, const char* path) {
+    char buffer[MAX_PATH_SIZE];
+    
+    if(path[0] == '/') 
+        path++;
+    
 }
 
 bool readSectors(FILE* disk, uint32_t lba, uint32_t count, void* bufferOut){
