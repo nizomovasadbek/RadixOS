@@ -1,4 +1,5 @@
 #include "fat.h"
+#include "disk.h"
 #include "stdio.h"
 #include "memdefs.h"
 
@@ -52,6 +53,15 @@ bool FAT_ReadFat(DISK* disk) {
     return DISK_ReadSectors(disk, g_Data->BS.BootSector.ReservedSectors, g_Data->BS.BootSector.SectorsPerFat, g_Fat);
 }
 
+bool FAT_ReadRootDirectory(DISK* disk) {
+    uint32_t lba = g_Data->BS.BootSector.ReservedSectors + g_Data->BS.BootSector.SectorsPerFat * g_Data->BS.BootSector.FatCount;
+    uint32_t size = sizeof(FAT_DirectoryEntry) * g_Data->BS.BootSector.DirEntryCount;
+    uint32_t sectors = (size + g_Data->BS.BootSector.BytesPerSector - 1) / g_Data->BS.BootSector.BytesPerSector;
+
+    g_RootDirectoryEnd = lba + sectors;
+    return DISK_ReadSectors(disk, lba, sectors, g_RootDirectory);
+}
+
 bool FAT_Initialize(DISK* disk) {
     g_Data = (FAT_Data far*) MEMORY_FAT_ADDR;
 
@@ -79,6 +89,17 @@ bool FAT_Initialize(DISK* disk) {
         printf("Not enough memory \r\n");
         return false;
     }
+
+    if(!FAT_ReadRootDirectory(disk)) {
+        printf("Error with reading root directory\r\n");
+        return 0;
+    }
+}
+
+FAT_File* FAT_Open(DISK* disk, const char* path) {
+    if(path[0]) {
+        path++;
+    }
 }
 
 bool readSectors(FILE* disk, uint32_t lba, uint32_t count, void* bufferOut){
@@ -86,20 +107,6 @@ bool readSectors(FILE* disk, uint32_t lba, uint32_t count, void* bufferOut){
     ok = ok && (fseek(disk, lba * g_BootSector.BytesPerSector, SEEK_SET) == 0);
     ok = ok && (fread(bufferOut, g_BootSector.BytesPerSector, count, disk)== count);
     return ok;
-}
-
-bool readRootDirectory(FILE* disk){
-    uint32_t lba = g_BootSector.ReservedSectors + g_BootSector.SectorsPerFat * g_BootSector.FatCount;
-    uint32_t size = sizeof(DirectoryEntry) * g_BootSector.DirEntryCount;
-    uint32_t sectors = (size / g_BootSector.BytesPerSector);
-    if(size % g_BootSector.BytesPerSector > 0){
-        sectors++;
-    }
-
-    g_RootDirectoryEnd = lba + sectors;
-
-    g_RootDirectory = (DirectoryEntry*) malloc(sectors * g_BootSector.BytesPerSector);
-    return readSectors(disk, lba, sectors, g_RootDirectory);
 }
 
 DirectoryEntry* findFile(const char* name){
