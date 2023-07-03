@@ -2,6 +2,8 @@
 #include "disk.h"
 #include "stdio.h"
 #include "memdefs.h"
+#include "string.h"
+#include "memory.h"
 
 #define SECTOR_SIZE 512
 #define MAX_FILE_HANDLES 10
@@ -157,22 +159,7 @@ FAT_File far* FAT_OpenEntry(DISK* disk, FAT_DirectoryEntry* entry) {
     return &fd->Public;
 }
 
-FAT_File* FAT_Open(DISK* disk, const char* path) {
-    char buffer[MAX_PATH_SIZE];
-    
-    if(path[0] == '/') 
-        path++;
-    
-}
-
-bool readSectors(FILE* disk, uint32_t lba, uint32_t count, void* bufferOut){
-    bool ok = true;
-    ok = ok && (fseek(disk, lba * g_BootSector.BytesPerSector, SEEK_SET) == 0);
-    ok = ok && (fread(bufferOut, g_BootSector.BytesPerSector, count, disk)== count);
-    return ok;
-}
-
-DirectoryEntry* findFile(const char* name){
+DirectoryEntry* FAT_FindFile(const char* name){
     for(uint32_t i = 0; i < g_BootSector.DirEntryCount; i++){
         if(memcmp(name, g_RootDirectory[i].Name, 11) == 0){
             return &g_RootDirectory[i];
@@ -180,6 +167,50 @@ DirectoryEntry* findFile(const char* name){
     }
 
     return NULL;
+}
+
+FAT_File* FAT_Open(DISK* disk, const char* path) {
+    char buffer[MAX_PATH_SIZE];
+    
+    if(path[0] == '/') 
+        path++;
+    
+    FAT_File far* parent = NULL;
+    FAT_File far* current = &g_Data->RootDirectory.Public;
+
+    while(*path) {
+        bool isLast = false;
+        const char* delim = strchr(path, '/');
+        if(delim != NULL) {
+            memcpy(name, path, delim - path);
+            name[delim - path + 1] = '\0';
+        } else {
+            unsigned len = strlen(path);
+            memcpy(name, path, len);
+            name[len + 1] = '\0';
+            path += len;
+            isLast = true;
+        }
+
+        FAT_DirectoryEntry entry;
+        if(FAT_FindFile(current, name, &entry)) {
+            if(!isLast && entry.Attributes & FAT_ATTRIBUTE_DIRECTORY == 0) {
+                printf("FAT: %s is not a directory\n", name);
+                return NULL;
+            }
+            FAT_Close(parent);
+            current = FAT_OpenEntry(disk, &entry);
+        }
+    }
+
+    return current;
+}
+
+bool readSectors(FILE* disk, uint32_t lba, uint32_t count, void* bufferOut){
+    bool ok = true;
+    ok = ok && (fseek(disk, lba * g_BootSector.BytesPerSector, SEEK_SET) == 0);
+    ok = ok && (fread(bufferOut, g_BootSector.BytesPerSector, count, disk)== count);
+    return ok;
 }
 
 bool readFile(DirectoryEntry* fileEntry, FILE* disk, uint8_t* outputBuffer){
