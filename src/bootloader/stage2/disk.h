@@ -1,5 +1,4 @@
-#ifndef _DISK_H
-#define _DISK_H
+#pragma once
 
 #include "stdint.h"
 
@@ -12,5 +11,3 @@ typedef struct {
 
 bool DISK_Initialize(DISK* disk, uint8_t driveNumber);
 bool DISK_ReadSectors(DISK* disk, uint32_t lba, uint8_t sectors, void far* dataOut);
-
-#endif

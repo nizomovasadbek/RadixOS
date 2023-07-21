@@ -13,7 +13,7 @@ entry:
     mov bp, sp
     sti
 
-    mov dh, 0
+    xor dh, dh
     push dx
     call _cstart_
 
